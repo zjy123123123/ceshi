@@ -1,0 +1,681 @@
+<!-- Generated from dashboard.html template, modified for 户号查询 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>分析看板</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100vh; overflow: hidden; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: #f5f7fa;
+      color: #334155;
+      display: flex;
+      flex-direction: column;
+    }
+    .header-bar {
+      background: linear-gradient(135deg, #006B54 0%, #008667 100%);
+      color: #fff;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .header-bar h1 { font-size: 20px; font-weight: 600; }
+    .header-bar .subtitle { font-size: 14px; opacity: 0.85; margin-top: 2px; }
+    .back-btn {
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .back-btn:hover { background: rgba(255,255,255,0.2); }
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+      max-width: 100%;
+      width: 100%;
+    }
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .dashboard-title { font-size: 18px; font-weight: 600; color: #1f2937; }
+    .dashboard-meta { font-size: 14px; color: #64748b; }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title .dot { font-size: 18px; }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 900px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 600px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+    .kpi-card {
+      border-radius: 10px;
+      padding: 14px 10px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .kpi-card.green { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); }
+    .kpi-card.blue { background: linear-gradient(135deg, #e3f2fd, #bbdefb); }
+    .kpi-card.red { background: linear-gradient(135deg, #fce4ec, #f8bbd0); }
+    .kpi-card.purple { background: linear-gradient(135deg, #f3e5f5, #e1bee7); }
+    .kpi-label { font-size: 14px; color: #555; margin-bottom: 4px; }
+    .kpi-value { font-size: 24px; font-weight: 700; color: #006B54; }
+    .kpi-value.blue { color: #1565c0; }
+    .kpi-value.red { color: #c62828; }
+    .kpi-value.purple { color: #7b1fa2; }
+    .kpi-unit { font-size: 14px; color: #888; margin-top: 2px; }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 15px;
+    }
+    .data-table th {
+      background: #f8fafc;
+      color: #64748b;
+      font-weight: 600;
+      padding: 10px 14px;
+      text-align: center;
+      border-bottom: 2px solid #e2e8f0;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+    .data-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #f1f5f9;
+      text-align: center;
+      color: #334155;
+    }
+    .data-table tr:hover td { background: #f8fafc; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .scene-cell { font-weight: 600; color: #006B54; }
+    .data-table td.rate-green { color: #16a34a; font-weight: 600; }
+    .data-table td.rate-orange { color: #ea580c; font-weight: 600; }
+    .data-table td.rate-red { color: #dc2626; font-weight: 600; }
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 900px) { .chart-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 600px) { .chart-grid { grid-template-columns: 1fr; } }
+    .chart-box {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .chart-title { font-size: 15px; font-weight: 600; color: #334155; margin-bottom: 10px; }
+    .chart-container { height: 260px; }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 768px) { .detail-grid { grid-template-columns: 1fr; } }
+    .detail-box {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .detail-header {
+      padding: 8px 14px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+    }
+    .detail-header.blue { background: #1976D2; }
+    .detail-header.purple { background: #7B1FA2; }
+    .detail-content {
+      padding: 12px 14px;
+      overflow: visible;
+    }
+    .sub-title {
+      font-weight: 600;
+      color: #1f2937;
+      font-size: 14px;
+      display: inline;
+    }
+    .case-title {
+      font-weight: 600;
+      color: #1976D2;
+      font-size: 15px;
+      display: inline-block;
+      margin-top: 8px;
+      margin-bottom: 4px;
+    }
+    .suggestion-item {
+      padding: 8px 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #424242;
+    }
+    .suggestion-item:last-child { border-bottom: none; }
+    .action-list { display: grid; gap: 8px; }
+    .action-item {
+      padding: 10px;
+      border-radius: 8px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #475569;
+    }
+    .action-item-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .action-item-num {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #7B1FA2, #9C27B0);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .action-item-title { font-size: 14px; font-weight: 600; color: #1f2937; }
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #94a3b8;
+    }
+    .empty-state-icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-state-text { font-size: 14px; }
+    .help-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      color: #64748b;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: help;
+      margin-left: 6px;
+      position: relative;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .help-icon:hover {
+      background: #006B54;
+      color: #fff;
+    }
+    .help-tooltip {
+      display: none;
+      position: absolute;
+      top: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      min-width: 500px;
+      max-width: 800px;
+      background: #f1f5f9;
+      color: #1f2937;
+      padding: 14px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: normal;
+      line-height: 1.6;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      white-space: nowrap;
+    }
+    .help-tooltip::before {
+      content: '';
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-bottom: 6px solid #f1f5f9;
+    }
+    .help-icon:hover .help-tooltip {
+      display: block;
+    }
+    .help-tooltip li {
+      margin-bottom: 2px;
+    }
+    .loading-mask {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255,255,255,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .loading-spinner {
+      width: 36px; height: 36px;
+      border: 3px solid #e2e8f0;
+      border-top-color: #006B54;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="header-bar">
+    <div class="header-left">
+      <div>
+        <h1>智能客服场景客户流失原因分析工具</h1>
+        <div class="subtitle">分析看板 · 数据汇总与可视化</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="dashboard-header">
+      <div class="dashboard-title" id="db-title">分析看板</div>
+      <button class="back-btn" onclick="try{window.parent.afCloseDashboard()}catch(e){window.location.href='./'}" style="border-color:#cbd5e1;background:#fff;color:#475569;">← 返回</button>
+    </div>
+    <div id="db-content">
+      <div class="loading-mask" id="db-loading">
+        <div class="loading-spinner"></div>
+        <div style="font-size:14px;color:#64748b;">正在加载分析数据...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ========== 数据读取（户号查询专用） ==========
+    var currentRecordId = localStorage.getItem('af_current_record_id');
+    var data = null;
+    var s = {};
+
+    // 1. 优先读独立记录数据(af_rdata_xxx)
+    if (currentRecordId) {
+      var ds = localStorage.getItem('af_rdata_' + currentRecordId) || localStorage.getItem(currentRecordId);
+      if (ds) {
+        data = JSON.parse(ds);
+        console.log('[HH Dashboard] 读取独立记录: ' + currentRecordId);
+      }
+    }
+
+    // 2. 降级读 af_kpi_data_hh
+    if (!data) {
+      var ds = localStorage.getItem('af_kpi_data_hh');
+      if (ds) {
+        data = { summary: JSON.parse(ds) };
+        console.log('[HH Dashboard] 从 af_kpi_data_hh 读取');
+      }
+    }
+
+    if (!data) {
+      document.getElementById('db-content').innerHTML = '<div class="empty-state"><div class="empty-state-icon">📊</div><div class="empty-state-text">暂无分析数据</div><div style="font-size:14px;color:#bbb;margin-top:8px;">请从主页面上传Excel并分析后，点击"查看"查看</div></div>';
+    } else {
+      // 兼容 summary 为对象(户号)或数组(停电)两种格式
+      var rawSummary = data.summary;
+      s = Array.isArray(rawSummary) ? (rawSummary[0] || {}) : (rawSummary || {});
+
+      var total = data.rows || s.total || 0;
+      var intentAccRate = s.intentAccRate || '0%';
+      var completionRate = s.completionRate || '0%';
+      var transferRate = s.transferRate || '0%';
+      var intentAcc = s.intentAcc || 0;
+      var qYes = s.qYes || 0;
+      var qNo = s.qNo || 0;
+      var rYes = 0;
+      if (typeof transferRate === 'string') rYes = parseInt(transferRate) || 0;
+      else if (typeof transferRate === 'number') rYes = Math.round(transferRate * total / 100);
+      var reasonMap = s.reasonMap || {};
+      var hTotal = s.hTotal || 0;   // 信息采集通过
+      var kTotal = s.kTotal || 0;   // 一轮验证通过
+      var nTotal = s.nTotal || 0;   // 二轮验证通过
+
+      // 户号场景漏斗:信息采集流失(J列挂机/转人工)→一轮验证流失(M列挂机/转人工)→二轮验证流失(P列挂机/转人工)→结果播报
+      var jLost = s.jLost || 0;
+      var mLost = s.mLost || 0;
+      var pLost = s.pLost || 0;
+
+      // 各环节流失(按J/M/P列挂机+转人工)
+      var infoCollectLost = jLost;                    // J列挂机+转人工
+      var round1Lost = mLost;                         // M列挂机+转人工
+      var round2Lost = pLost;                         // P列挂机+转人工
+      var resultLost = s.resultLost || 0;                        // Q列非空且R=是的数量
+      // 漏斗图所需环节通过数
+      var appealEnter = total;
+      var infoCollectEnter = hTotal;
+      var round1VerifyEnter = kTotal;
+      var round2VerifyEnter = nTotal;
+      var foundAccount = qYes;
+
+      // 核心瓶颈: 流失最多的环节
+      var losses = [
+        { name: '信息采集', rate: total > 0 ? (infoCollectLost / total * 100) : 0, count: infoCollectLost },
+        { name: '一轮验证', rate: total > 0 ? (round1Lost / total * 100) : 0, count: round1Lost },
+        { name: '二轮验证', rate: total > 0 ? (round2Lost / total * 100) : 0, count: round2Lost },
+        { name: '结果播报', rate: total > 0 ? (resultLost / total * 100) : 0, count: resultLost }
+      ];
+      losses.sort(function(a, b) { return b.rate - a.rate; });
+      var topLoss = losses[0];
+
+      // 数值提取
+      var intentAccNum = parseFloat(intentAccRate) || 0;
+      var completeNum = parseFloat(completionRate) || 0;
+      var transferNum = parseFloat(transferRate) || 0;
+      var infoCollectLostRate = total > 0 ? (infoCollectLost / total * 100) : 0;
+      var round1LostRate = total > 0 ? (round1Lost / total * 100) : 0;
+      var round2LostRate = total > 0 ? (round2Lost / total * 100) : 0;
+      var resultLostRate = total > 0 ? (resultLost / total * 100) : 0;
+
+      document.getElementById('db-title').textContent = data.file ? data.file + ' - 户号查询' : '分析看板';
+
+      function rateClass(val) {
+        if (val < 5) return 'rate-green';
+        if (val <= 20) return 'rate-orange';
+        return 'rate-red';
+      }
+
+      
+    // ========== AI优化建议渲染(支持##和【】两种格式) ==========
+    function renderAISuggestions(text) {
+      if (!text || typeof text !== 'string' || text.trim().length === 0) return '';
+      text = text.replace(/^\s*---+\s*$/gm, '');
+      text = text.replace(/\*\*(.*?)\*\*/g, '$1');
+      text = text.replace(/^\s*[-*]\s+/gm, '');
+
+      var iconMap = {
+        '流程设计': '\ud83d\udd04', '流程优化': '\ud83d\udd04',
+        '意图识别': '\ud83c\udfaf', '意图理解': '\ud83c\udfaf',
+        '身份认证': '\ud83d\udd10', '身份验证': '\ud83d\udd10',
+        '关系库': '\ud83d\udccb',
+        '用户体验': '\ud83d\udca1',
+        '技术优化': '\u2699\ufe0f',
+        '运营分析': '\ud83d\udcca',
+        '行业对标': '\ud83c\udfc6', '业务对标': '\ud83c\udfc6',
+        '话术优化': '\ud83d\udcac',
+        '多轮对话': '\ud83d\udd01',
+        '结果播报': '\ud83d\udce2',
+        '信息采集': '\ud83d\udcdd',
+        '一轮验证': '\ud83d\udd0d', '二轮验证': '\ud83d\udd0e',
+        '户号查询': '\ud83d\udd22'
+      };
+
+      var groups = [];
+      var currentGroup = null;
+      var lines = text.split('\n');
+
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (!line) continue;
+
+        var heading = null;
+        // 格式1: 【维度名称】
+        var bm = line.match(/^【([^】]+)】/);
+        if (bm) heading = bm[1].trim();
+        // 格式2: ## 维度名称
+        if (!heading) {
+          var h2m = line.match(/^##\s+(.+)/);
+          if (h2m) {
+            var h2 = h2m[1].trim();
+            if (/^任务[一二]/.test(h2)) { currentGroup = null; continue; }
+            if (/^环节评估$/.test(h2)) { currentGroup = null; continue; }
+            if (/^优化建议$/.test(h2)) { currentGroup = null; continue; }
+            heading = h2;
+          }
+        }
+
+        if (heading) {
+          var title = heading.replace(/[-\s]*\d+$/g, '').trim();
+          var icon = '\ud83d\udca1';
+          for (var key in iconMap) {
+            if (title.indexOf(key) >= 0) { icon = iconMap[key]; break; }
+          }
+          currentGroup = {title: title, icon: icon, analysis: '', cases: []};
+          groups.push(currentGroup);
+          continue;
+        }
+
+        if (currentGroup) {
+          if (/^分析[：:]?\s*/.test(line)) {
+            var at = line.replace(/^分析[：:]?\s*/, '');
+            if (at) currentGroup.analysis += (currentGroup.analysis ? '\n' : '') + at;
+          } else if (/^行业案例[\s\d]*[：:]/.test(line)) {
+            var ct = line.replace(/^行业案例[\s\d]*[：:]?\s*/, '');
+            if (ct && currentGroup.cases.length < 3) currentGroup.cases.push(ct);
+          } else {
+            currentGroup.analysis += (currentGroup.analysis ? '\n' : '') + line;
+          }
+        }
+      }
+
+      var html = '<div style="display:flex;flex-direction:column;gap:10px;">';
+      for (var gi = 0; gi < groups.length; gi++) {
+        var g = groups[gi];
+        if (!g.title) continue;
+        html += '<div style="display:flex;gap:10px;align-items:flex-start;padding:10px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;overflow-x:hidden;word-wrap:break-word;word-break:break-all;">';
+        html += '<div style="width:32px;height:32px;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;border:1px solid #e2e8f0;">' + g.icon + '</div>';
+        html += '<div style="flex:1;">';
+        html += '<div style="font-size:15px;font-weight:600;color:#1f2937;margin-bottom:8px;">' + g.title + '</div>';
+        if (g.analysis && g.analysis.trim()) {
+          html += '<div style="font-size:14px;color:#475569;line-height:1.8;">分析：' + g.analysis.trim().replace(/\n/g, '<br>') + '</div>';
+        }
+        for (var ci = 0; ci < g.cases.length && ci < 3; ci++) {
+          html += '<div style="font-size:14px;color:#475569;line-height:1.8;margin-top:6px;"><b style="color:#1976D2;">行业案例 ' + (ci+1) + '：</b>' + g.cases[ci].trim().replace(/\n/g, '<br>') + '</div>';
+        }
+        html += '</div></div>';
+      }
+      html += '</div>';
+      return html;
+    }
+var html = '';
+
+      // === KPI卡片 ===
+      html += '<div class="kpi-grid">';
+      html += '<div class="kpi-card green"><div class="kpi-label">总记录数</div><div class="kpi-value">' + total + '<span class="kpi-unit"> 条</span></div></div>';
+      html += '<div class="kpi-card blue"><div class="kpi-label">意图识别准确率</div><div class="kpi-value blue">' + intentAccRate + '</div></div>';
+      html += '<div class="kpi-card green"><div class="kpi-label">流程完成率</div><div class="kpi-value">' + completionRate + '</div></div>';
+      html += '<div class="kpi-card red"><div class="kpi-label">转人工率</div><div class="kpi-value red">' + transferRate + '</div></div>';
+      html += '<div class="kpi-card purple"><div class="kpi-label">核心瓶颈</div><div class="kpi-value purple" style="font-size:18px;">' + topLoss.name + '</div><div class="kpi-unit">流失' + topLoss.count + '条，占' + topLoss.rate.toFixed(1) + '%</div></div>';
+      html += '</div>';
+
+      // === 汇总统计表 ===
+      html += '<div class="card">';
+      html += '<div class="card-title"><span class="dot">📊</span>各环节客户流失率分析表';
+      html += '<span class="help-icon">?<span class="help-tooltip"><ul style="margin:0;padding-left:16px;">';
+      html += '<li>转人工率：R列"是"的数量 / 总样本数</li>';
+      html += '<li>信息采集流失率：J列挂机+转人工数量 / 总样本数</li>';
+      html += '<li>一轮验证流失率：M列挂机+转人工数量 / 总样本数</li>';
+      html += '<li>二轮验证流失率：P列挂机+转人工数量 / 总样本数</li>';
+      html += '<li>流程完成率：Q列"是"或"否"的总数量 / 总样本数（已播报话术即算完成）</li>';
+      html += '<li>结果播报流失率：Q列非空且R列为"是"的数量 / 总样本数</li>';
+      html += '</ul></span></span>';
+      html += '</div>';
+      html += '<table class="data-table"><thead><tr><th rowspan="2">场景</th><th rowspan="2">转人工率</th><th colspan="5" style="border-bottom:1px solid #e2e8f0;">各环节流失率</th><th rowspan="2">流程<br>完成率</th></tr>';
+      html += '<tr><th>诉求接入</th><th>信息采集</th><th>一轮验证</th><th>二轮验证</th><th>结果播报</th></tr></thead><tbody>';
+      html += '<tr><td class="scene-cell">户号查询</td>';
+      html += '<td class="' + rateClass(parseFloat(transferRate) || 0) + '">' + transferRate + '</td>';
+      html += '<td class="rate-green">0.00%</td>';
+      html += '<td class="' + rateClass(infoCollectLostRate) + '">' + infoCollectLostRate.toFixed(2) + '%</td>';
+      html += '<td class="' + rateClass(round1LostRate) + '">' + round1LostRate.toFixed(2) + '%</td>';
+      html += '<td class="' + rateClass(round2LostRate) + '">' + round2LostRate.toFixed(2) + '%</td>';
+      html += '<td class="' + rateClass(resultLostRate) + '">' + resultLostRate.toFixed(2) + '%</td>';
+      html += '<td class="' + rateClass(completeNum) + '">' + completionRate + '</td>';
+      html += '</tr></tbody></table></div>';
+
+      // === 图表区 ===
+      html += '<div class="chart-grid">';
+      html += '<div class="chart-box"><div class="chart-title">🔄 阶段流失漏斗</div><div class="chart-container" id="db-funnel"></div></div>';
+      html += '<div class="chart-box"><div class="chart-title">📉 流失原因分布</div><div class="chart-container" id="db-loss-chart"></div></div>';
+      html += '<div class="chart-box"><div class="chart-title">🔴 转人工原因分布</div><div id="db-reason-list" style="padding:10px 0;"></div></div>';
+      html += '</div>';
+
+      
+
+      // ==== AI优化建议卡片 ====
+      html += '<div class="detail-box"><div class="detail-header blue">\ud83d\udca1 AI优化建议</div><div class="detail-content" id="db-ai-suggestions">';
+      // 优先使用aiSuggestions(raw text), 降级aiSuggestionsRendered(预渲染HTML)
+      var sugText = data.aiSuggestions;
+      var sugRendered = data.aiSuggestionsRendered;
+      if (sugText && typeof renderAISuggestions === 'function') {
+        html += renderAISuggestions(sugText);
+      } else if (sugRendered) {
+        html += sugRendered;
+      } else {
+        html += '<div style="text-align:center;color:#999;padding:20px;font-size:14px;">暂无AI优化建议</div>';
+      }
+      html += '</div></div>';
+// === 闭环落地清单 ===
+      html += '<div class="detail-box"><div class="detail-header purple">🧩 闭环落地清单</div><div class="detail-content" id="db-action-list"></div></div>';
+
+      document.getElementById('db-content').innerHTML = html;
+
+      // === 渲染漏斗图 ===
+      if (typeof echarts !== 'undefined') {
+        var funnelDom = document.getElementById('db-funnel');
+        if (funnelDom) {
+          var fc = echarts.init(funnelDom);
+          fc.setOption({
+            tooltip: { trigger: 'item', formatter: '{b}: {c}条' },
+            legend: { bottom: 0, textStyle: { fontSize: 13 } },
+            series: [{
+              type: 'funnel',
+              left: '10%', right: '10%', top: '5%', bottom: '18%',
+              minSize: '20%', maxSize: '100%',
+              sort: 'descending', gap: 4,
+              label: { show: true, position: 'inside', fontSize: 13, fontWeight: 600, formatter: '{b}\n{c}条' },
+              labelLine: { show: false },
+              itemStyle: { borderColor: '#fff', borderWidth: 2 },
+              data: [
+                { name: '诉求接入', value: appealEnter, itemStyle: { color: '#006B54' } },
+                { name: '信息采集', value: infoCollectEnter, itemStyle: { color: '#00796B' } },
+                { name: '信息验证', value: round1VerifyEnter, itemStyle: { color: '#26A69A' } },
+                { name: '户号查询成功', value: foundAccount, itemStyle: { color: '#A5D6A7' } }
+              ]
+            }]
+          });
+        }
+
+        // === 流失原因饼图 ===
+        var lossDom = document.getElementById('db-loss-chart');
+        if (lossDom) {
+          var lc = echarts.init(lossDom);
+          lc.setOption({
+            tooltip: { trigger: 'item', formatter: '{b}: {c}条 ({d}%)' },
+            legend: { bottom: 0, textStyle: { fontSize: 13 } },
+            series: [{
+              type: 'pie',
+              radius: ['40%', '70%'],
+              center: ['50%', '45%'],
+              avoidLabelOverlap: true,
+              itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+              label: { show: true, fontSize: 13, formatter: '{b}\n{d}%' },
+              data: [
+                { name: '信息采集流失', value: infoCollectLost || 0, itemStyle: { color: '#ef5350' } },
+                { name: '一轮验证流失', value: round1Lost || 0, itemStyle: { color: '#ff7043' } },
+                { name: '二轮验证流失', value: round2Lost || 0, itemStyle: { color: '#ffa726' } },
+                { name: '结果播报流失', value: resultLost || 0, itemStyle: { color: '#ffca28' } }
+              ]
+            }]
+          });
+        }
+      }
+
+      // === 转人工原因分布 ===
+      var reasonListEl = document.getElementById('db-reason-list');
+      if (reasonListEl) {
+        var reasonKeys = Object.keys(reasonMap);
+        var totalReasons = 0;
+        reasonKeys.forEach(function(k) { totalReasons += reasonMap[k]; });
+        var rhtml = '<div style="display:flex;flex-direction:column;gap:12px;">';
+        if (reasonKeys.length === 0) {
+          rhtml += '<div style="text-align:center;color:#999;padding:20px;font-size:14px;">无转人工记录</div>';
+        } else {
+          reasonKeys.sort(function(a,b){ return reasonMap[b]-reasonMap[a]; });
+          reasonKeys.forEach(function(k) {
+            var count = reasonMap[k];
+            var pct = totalReasons > 0 ? (count / totalReasons * 100).toFixed(1) : 0;
+            var barWidth = totalReasons > 0 ? (count / totalReasons * 100) : 0;
+            rhtml += '<div>';
+            rhtml += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">';
+            rhtml += '<span style="font-size:14px;color:#333;">' + k + '</span>';
+            rhtml += '<span style="font-size:14px;color:#666;">' + count + '条(' + pct + '%)</span>';
+            rhtml += '</div>';
+            rhtml += '<div style="background:#f5f5f5;border-radius:4px;height:8px;overflow:hidden;">';
+            rhtml += '<div style="height:100%;width:' + barWidth + '%;background:linear-gradient(90deg,#ff7043,#ff5722);border-radius:4px;"></div>';
+            rhtml += '</div></div>';
+          });
+        }
+        rhtml += '</div>';
+        reasonListEl.innerHTML = rhtml;
+      }
+
+      // === 闭环落地清单 ===
+      var actionEl = document.getElementById('db-action-list');
+      if (actionEl) {
+        var ahtml = '<div class="action-list">';
+        ahtml += '<div class="action-item"><div class="action-item-header"><span class="action-item-num">1</span><span class="action-item-title">定位瓶颈</span></div>' + topLoss.name + '为当前优先排查环节，流失' + topLoss.count + '条，占比' + topLoss.rate.toFixed(1) + '% 。建议优先检查该环节的入口话术、流程衔接和兜底策略。</div>';
+        ahtml += '<div class="action-item"><div class="action-item-header"><span class="action-item-num">2</span><span class="action-item-title">建议验证</span></div>抽取该环节高频失败样本，补充失败原因标签，形成话术/规则迭代清单。</div>';
+        ahtml += '<div class="action-item"><div class="action-item-header"><span class="action-item-num">3</span><span class="action-item-title">效果回看</span></div>上线优化后按完成率、转人工率、最高环节流失率三项指标对比复盘。</div>';
+        ahtml += '</div>';
+        actionEl.innerHTML = ahtml;
+      }
+
+      // 移除loading遮罩
+      var loadingEl = document.getElementById('db-loading');
+      if (loadingEl) loadingEl.style.display = 'none';
+    }
+
+    // 响应式调整
+    window.addEventListener('resize', function() {
+      if (typeof echarts !== 'undefined') {
+        ['db-funnel', 'db-loss-chart'].forEach(function(id) {
+          var dom = document.getElementById(id);
+          if (dom) {
+            var chart = echarts.getInstanceByDom(dom);
+            if (chart) chart.resize();
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>
